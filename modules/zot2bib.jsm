@@ -27,20 +27,20 @@ var zoteroCallback = {
         file.append("zotero_item_" + item.id + ".bib");
         file.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0666);
 
-        var script_path = own_path.path + '/zot2bib.applescript';
-        var osascript = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-        osascript.initWithPath('/usr/bin/osascript');
+        var externalEditor = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
         var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
-        process.init(osascript);
 
         var destfiles = Zot2Bib.loadList('destfiles');
         if (prefs.getBoolPref('addtoempty')) destfiles.push('');
         var openpub = prefs.getBoolPref('openpub') ? 'true' : 'false';
         var bringtofront = prefs.getBoolPref('bringtofront') ? 'true' : 'false';
         var extrabraces = prefs.getBoolPref('extrabraces') ? 'true' : 'false';
+        var editor = prefs. getCharPref('editor');
+        var editorPath = prefs. getCharPref('editorpath');
 
         var translator = new Zotero.Translate('export');
         translator.setTranslator('9cb70025-a888-4a29-a210-93ec52da40d4'); // BibTeX
+        // translator.setTranslator('b6e39b57-8942-4d11-8259-342c46ce395f'); // BibLaTeX
         translator.setItems([item]);
         translator.setLocation(file);
 
@@ -50,8 +50,20 @@ var zoteroCallback = {
             prompts.alert(null, "No destination for new publications is selected in Zot2Bib", "Use the Zot2Bib status bar menu to select a destination, then try again.");
           }
           for (var j = 0; j < destfiles.length; j ++) {
-            var args = [script_path, destfiles[j], file.path, openpub, bringtofront, extrabraces];
-            process.run(true, args, args.length); // first param true => calling thread will be blocked until called process terminates
+            if(editor == "bibdesk") {
+              var script_path = own_path.path + '/zot2bib.applescript';
+              externalEditor.initWithPath('/usr/bin/osascript');
+              process.init(externalEditor);
+
+              var args = [script_path, destfiles[j], file.path, openpub, bringtofront, extrabraces];
+              process.run(true, args, args.length); // first param true => calling thread will be blocked until called process terminates
+            }
+            else if(editor == "jabref") {
+              externalEditor.initWithPath(editorPath);
+              process.init(externalEditor);
+              var args = ["--importToOpen", file.path];
+              process.run(false, args, args.length);
+            }
           }
           if (! prefs.getBoolPref('keepinzotero')) {
             deleteQueue.push(item.id);
@@ -77,6 +89,9 @@ Zot2Bib = {
     if (! Zotero) {
       Zotero = z;
       Zotero.Notifier.registerObserver(zoteroCallback, ['item']);
+
+      // Unregister callback when the window closes (to avoid memory leaks)
+      // window.addEventListener('unload', function(e) {Zotero.Notifier.unregisterObserver(notifierID);}, false);
     }
   },
   about: function(w) {
@@ -170,6 +185,12 @@ Zot2Bib = {
       for (var i = 0; i < a.length; i ++) a[i] = unescape(a[i]);
       return a;
     }
+  },
+  getEditorPath: function() {
+    return prefs.getCharPref('editorpath');
+  },
+  setEditorPath: function(value) {
+    prefs.setCharPref('editorpath', value);
   }
 }
 

@@ -89,3 +89,52 @@ onload = function() {
 onblur = onunload = function () {
   copyListToPrefs();
 }
+
+function onEditorChanged() {
+
+}
+function chooseEditorPath() {
+  var oldEditorPath = Zot2Bib.getEditorPath();
+  var oldEditorExe = getFile(oldEditorPath);
+
+  // Show dialog
+  var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+  if (oldEditorExe) {
+    fp.displayDirectory = oldEditorExe;
+  }
+  fp.init(window, "Choose JabRef executable file", nsIFilePicker.modeOpen);
+  fp.appendFilter("Executable", "*.exe");
+  if (fp.show() == nsIFilePicker.returnOK) {
+    var path = fp.file.path;
+  }
+  Zot2Bib.setEditorPath(path);
+  return path;
+}
+
+function getFile(path) {
+  // Try to find this file
+  if (path) {
+    var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    try {
+      file.persistentDescriptor = path;
+      return file;
+    }
+    catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
+function updateEditorPathTextBox() {
+  var filefield = gebi('editorpath');
+  var editorPath = Zot2Bib.getEditorPath();
+  var file = this.getFile(editorPath);
+  filefield.file = file;
+  if (file) {
+    filefield.label = file.path;
+  }
+  else {
+    filefield.label = '';
+  }
+}
