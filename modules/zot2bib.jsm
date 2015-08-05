@@ -35,8 +35,8 @@ var zoteroCallback = {
         var openpub = prefs.getBoolPref('openpub') ? 'true' : 'false';
         var bringtofront = prefs.getBoolPref('bringtofront') ? 'true' : 'false';
         var extrabraces = prefs.getBoolPref('extrabraces') ? 'true' : 'false';
-        var editor = prefs. getCharPref('editor');
-        var editorPath = prefs. getCharPref('editorpath');
+        var editor = prefs.getCharPref('editor');
+        var editorPath = prefs.getCharPref('editorpath');
 
         var translator = new Zotero.Translate('export');
         translator.setTranslator('9cb70025-a888-4a29-a210-93ec52da40d4'); // BibTeX
@@ -90,7 +90,7 @@ Zot2Bib = {
       Zotero = z;
       Zotero.Notifier.registerObserver(zoteroCallback, ['item']);
 
-      // Unregister callback when the window closes (to avoid memory leaks)
+      // Unregister callback when the window closes (to avoid memory leaks.)
       // window.addEventListener('unload', function(e) {Zotero.Notifier.unregisterObserver(notifierID);}, false);
     }
   },
